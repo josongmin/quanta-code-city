@@ -100,19 +100,18 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
       const height = node.loc / 100;
       const blockSize = 2;
       const numBlocks = Math.max(1, Math.ceil(height / blockSize));
-      const isMessy = node.solidViolations > 3 || node.risk > 0.6 || node.techDebt > 0.6;
+      const isMessy = node.solidViolations > 3 || node.risk > 0.6 || node.techDebt > 0.6 || node.complexity > 50;
       const isWireframe = node.testCoverage < 0.3;
 
       for (let i = 0; i < numBlocks; i++) {
         const blockGeo = new THREE.BoxGeometry(4, blockSize - 0.1, 4); // Small gap between blocks
         
-        let blockMesh;
         const blockMat = new THREE.MeshStandardMaterial({
           color: node.isDead ? THEME.ghost : (isWireframe ? '#94A3B8' : THEME.buildingBase),
           transparent: node.isDead || isWireframe,
           opacity: node.isDead ? 0.3 : (isWireframe ? 0.4 : 1),
         });
-        blockMesh = new THREE.Mesh(blockGeo, blockMat);
+        const blockMesh = new THREE.Mesh(blockGeo, blockMat);
         blockMesh.castShadow = true;
         blockMesh.receiveShadow = true;
 
@@ -123,17 +122,29 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
         let rotZ = 0;
 
         if (isMessy) {
-          // Add some randomness to stacking if it's "messy" code
-          offsetX = (Math.random() - 0.5) * 0.7;
-          offsetZ = (Math.random() - 0.5) * 0.7;
-          rotX = (Math.random() - 0.5) * 0.15;
-          rotY = (Math.random() - 0.5) * 0.3;
-          rotZ = (Math.random() - 0.5) * 0.15;
+          // Intensify randomness for messy code, increasing with height
+          const intensity = 0.5 + (i / numBlocks) * 1.5;
+          offsetX = (Math.random() - 0.5) * intensity;
+          offsetZ = (Math.random() - 0.5) * intensity;
+          rotX = (Math.random() - 0.5) * 0.2 * intensity;
+          rotY = (Math.random() - 0.5) * 0.5 * intensity;
+          rotZ = (Math.random() - 0.5) * 0.2 * intensity;
         }
 
-        blockMesh.position.set(offsetX, i * blockSize + blockSize / 2, offsetZ);
+        const baseHeight = i * blockSize + blockSize / 2;
+        blockMesh.position.set(offsetX, baseHeight, offsetZ);
         blockMesh.rotation.set(rotX, rotY, rotZ);
         group.add(blockMesh);
+
+        // --- Building Block Animation (Floating blocks) ---
+        gsap.to(blockMesh.position, {
+          y: baseHeight + (Math.random() * 0.4 + 0.1),
+          duration: 1.5 + Math.random() * 3,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: Math.random() * 2
+        });
       }
 
       // 3. SOLID Violations (Tilt)
@@ -143,20 +154,21 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
         group.rotation.z = (node.solidViolations / 10) * (Math.PI / 8);
       }
 
-      // 2. Risk (Fire) - Enhanced and Intensified
+      // 2. Risk (Fire) - Muted and subtler
       if (node.risk > 0.5) {
         const fireParticles = new THREE.Group();
-        const fireCount = node.risk > 0.8 ? 40 : 20;
+        const fireCount = node.risk > 0.8 ? 30 : 15; 
         for (let i = 0; i < fireCount; i++) {
+          const sizeRandom = Math.random() * 0.3 + 0.15;
           const p = new THREE.Mesh(
-            new THREE.SphereGeometry(Math.random() * 0.4 + 0.3, 4, 4),
+            new THREE.SphereGeometry(sizeRandom, 4, 4),
             new THREE.MeshBasicMaterial({ 
-              color: i % 2 === 0 ? THEME.fire : '#ffcc00', 
+              color: i % 3 === 0 ? THEME.fire : (i % 3 === 1 ? '#ffcc00' : '#ff4400'), 
               transparent: true 
             })
           );
           const startY = Math.random() * height;
-          const range = 2 + node.risk * 2;
+          const range = 1.5 + node.risk * 1.5; 
           p.position.set(
             (Math.random() - 0.5) * range,
             startY,
@@ -165,24 +177,24 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
           fireParticles.add(p);
           
           gsap.to(p.position, {
-            y: startY + 4 + Math.random() * 4,
-            x: p.position.x + (Math.random() - 0.5) * 2,
-            z: p.position.z + (Math.random() - 0.5) * 2,
-            duration: 0.8 + Math.random(),
+            y: startY + 3 + Math.random() * 3,
+            x: p.position.x + (Math.random() - 0.5) * 1.5,
+            z: p.position.z + (Math.random() - 0.5) * 1.5,
+            duration: 1.2 + Math.random(), 
             repeat: -1,
             ease: "power1.out",
             delay: Math.random()
           });
-          gsap.fromTo(p.scale, { x: 1.5, y: 1.5, z: 1.5 }, {
+          gsap.fromTo(p.scale, { x: 1.2, y: 1.2, z: 1.2 }, {
              x: 0, y: 0, z: 0,
-             duration: 0.8 + Math.random(),
+             duration: 1.2 + Math.random(),
              repeat: -1,
              ease: "none",
              delay: Math.random()
           });
           gsap.to(p.material, {
             opacity: 0,
-            duration: 0.8 + Math.random(),
+            duration: 1.2 + Math.random(),
             repeat: -1,
             ease: "none",
             delay: Math.random()
@@ -349,6 +361,114 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
         skyLabelSprite.scale.set(10, 2.5, 1);
         skyLabelSprite.position.set(0, height + 15, 0); // Very high up
         group.add(skyLabelSprite);
+      }
+
+      // --- AI Generated Visual (Dual-Mode Autonomous Drones) ---
+      if (node.aiGenerated) {
+        const droneGroup = new THREE.Group();
+        // ONLY ONE RED DRONE (at BigBallOfMud, id '7')
+        const isMalicious = node.id === '7';
+        const droneColor = isMalicious ? 0xff0000 : 0x00ccff;
+        const droneCount = 1; // Only one drone per building as requested
+        
+        for (let i = 0; i < droneCount; i++) {
+          const droneHost = new THREE.Group();
+          const drone = new THREE.Group();
+          
+          // Sleek aerodynamic body (Larger if red)
+          const scaleMult = isMalicious ? 2 : 1;
+          const dBody = new THREE.Mesh(
+            new THREE.CapsuleGeometry(0.3 * scaleMult, 0.6 * scaleMult, 4, 8),
+            new THREE.MeshStandardMaterial({ 
+              color: isMalicious ? 0x000000 : 0xffffff, 
+              emissive: droneColor,
+              emissiveIntensity: 0.8,
+              metalness: 1.0, 
+              roughness: 0.05 
+            })
+          );
+          dBody.rotation.x = Math.PI / 2;
+          drone.add(dBody);
+          
+          // Sensor eye
+          const dEye = new THREE.Mesh(
+            new THREE.SphereGeometry(0.15 * scaleMult, 8, 8),
+            new THREE.MeshBasicMaterial({ color: droneColor })
+          );
+          dEye.position.z = 0.45 * scaleMult;
+          drone.add(dEye);
+          
+          // Pulsing animation for the sensor
+          gsap.to(dEye.material, { opacity: 0.3, duration: isMalicious ? 0.4 : 1.2, repeat: -1, yoyo: true });
+
+          // Initial positioning
+          const angle = Math.random() * Math.PI * 2;
+          const radius = isMalicious ? 10 : 8;
+          droneHost.position.set(
+            Math.cos(angle) * radius,
+            height * 0.7,
+            Math.sin(angle) * radius
+          );
+          
+          droneHost.add(drone);
+          droneGroup.add(droneHost);
+          
+          if (isMalicious) {
+            // RED BOT (Aggressive but controlled): Active scanning, no chaotic spin
+            gsap.to(droneHost.position, {
+              y: "+=3",
+              duration: 2,
+              repeat: -1,
+              yoyo: true,
+              ease: "sine.inOut"
+            });
+            
+            // Random scanning movements
+            const scan = () => {
+              if (!sceneRef.current) return;
+              gsap.to(droneHost.position, {
+                x: (Math.random() - 0.5) * 15,
+                z: (Math.random() - 0.5) * 15,
+                duration: 2,
+                ease: "power2.inOut",
+                onComplete: () => setTimeout(scan, Math.random() * 1000 + 1000)
+              });
+              
+              // Look at a point on the building
+              drone.lookAt(0, height * Math.random(), 0);
+            };
+            scan();
+
+            // Subtle roll instead of chaotic spin
+            gsap.to(drone.rotation, {
+              z: 0.2,
+              duration: 0.5,
+              repeat: -1,
+              yoyo: true,
+              ease: "sine.inOut"
+            });
+          } else {
+            // BLUE BOT (Constructive): Smooth, focused movement
+            gsap.to(droneHost.position, {
+              y: droneHost.position.y + 2,
+              duration: 4,
+              repeat: -1,
+              yoyo: true,
+              ease: "sine.inOut"
+            });
+
+            // Smoothly orbit
+            gsap.to(droneGroup.rotation, {
+              y: Math.PI * 2,
+              duration: 15,
+              repeat: -1,
+              ease: "none"
+            });
+            
+            drone.lookAt(0, height / 2, 0);
+          }
+        }
+        group.add(droneGroup);
       }
 
       // 6. Tech Debt (Trash and Clutter)

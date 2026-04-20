@@ -26,7 +26,12 @@ const HUD: React.FC<HUDProps> = ({ activeNode }) => {
     if (activeNode.heuristicLevel > 0.7) report += "INTEL: HEURISTIC ANALYSIS active. Purple question marks detected. High guesswork in logic. ";
     if (activeNode.isDead) report += "WARNING: This building is a GHOST. Dead code detected. ";
     if (activeNode.isGodClass) report += "CRITICAL: GOD CLASS DETECTED. Too many responsibilities in one sector. ";
-    if (activeNode.aiGenerated) report += "NOTICE: AI-SLOP DETECTED. Autonomous logic generation traces found. ";
+    if (activeNode.aiGenerated) {
+      const isMalicious = activeNode.id === '7';
+      report += isMalicious 
+        ? "ALARM: UNIQUE REBELLIOUS AI DETECTED. The Prime Red Bot is actively destabilizing 'BigBallOfMud'. "
+        : "INTEL: CONSTRUCTIVE AI ACTIVE. Typical blue drones are auditing and reinforcing the module structure. ";
+    }
     if (activeNode.risk > 0.7) report += "CRITICAL: High risk fire party on-going. Refactor immediately. ";
     if (activeNode.solidViolations > 5) report += "ERROR: Structural integrity compromised. SOLID principles ignored. Building is tilting! ";
     if (activeNode.memoryLeak) report += "NOTICE: Data puddles found. Possible memory leaks in sector. ";
