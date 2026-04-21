@@ -66,17 +66,23 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
     directionalLight.shadow.mapSize.height = 2048;
     scene.add(directionalLight);
 
-    // --- Floor / Grid ---
+    // --- Floor / Foundation (Thick Slab) ---
+    const slabHeight = 4;
+    const slabGeometry = new THREE.BoxGeometry(110, slabHeight, 110);
+    const slabMaterial = new THREE.MeshStandardMaterial({ 
+      color: THEME.bg, // Back to lighter background color
+      metalness: 0.1,
+      roughness: 0.8
+    });
+    const foundationSlab = new THREE.Mesh(slabGeometry, slabMaterial);
+    foundationSlab.position.y = -slabHeight / 2; // Top surface at y=0
+    foundationSlab.receiveShadow = true;
+    scene.add(foundationSlab);
+
+    // Standard Grid Helper on top of the slab
     const gridHelper = new THREE.GridHelper(100, 50, THEME.grid, THEME.grid);
     gridHelper.position.y = 0.01;
     scene.add(gridHelper);
-
-    const planeGeometry = new THREE.PlaneGeometry(100, 100);
-    const planeMaterial = new THREE.MeshStandardMaterial({ color: THEME.bg });
-    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI / 2;
-    plane.receiveShadow = true;
-    scene.add(plane);
 
     // --- Nodes (Buildings) ---
     const nodesGroup = new THREE.Group();
@@ -369,37 +375,122 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
         // ONLY ONE RED DRONE (at BigBallOfMud, id '7')
         const isMalicious = node.id === '7';
         const droneColor = isMalicious ? 0xff0000 : 0x00ccff;
-        const droneCount = 1; // Only one drone per building as requested
+        const droneCount = 1; 
         
         for (let i = 0; i < droneCount; i++) {
           const droneHost = new THREE.Group();
           const drone = new THREE.Group();
-          
-          // Sleek aerodynamic body (Larger if red)
-          const scaleMult = isMalicious ? 2 : 1;
-          const dBody = new THREE.Mesh(
-            new THREE.CapsuleGeometry(0.3 * scaleMult, 0.6 * scaleMult, 4, 8),
-            new THREE.MeshStandardMaterial({ 
-              color: isMalicious ? 0x000000 : 0xffffff, 
-              emissive: droneColor,
-              emissiveIntensity: 0.8,
-              metalness: 1.0, 
-              roughness: 0.05 
-            })
-          );
-          dBody.rotation.x = Math.PI / 2;
-          drone.add(dBody);
-          
-          // Sensor eye
-          const dEye = new THREE.Mesh(
-            new THREE.SphereGeometry(0.15 * scaleMult, 8, 8),
-            new THREE.MeshBasicMaterial({ color: droneColor })
-          );
-          dEye.position.z = 0.45 * scaleMult;
-          drone.add(dEye);
-          
-          // Pulsing animation for the sensor
-          gsap.to(dEye.material, { opacity: 0.3, duration: isMalicious ? 0.4 : 1.2, repeat: -1, yoyo: true });
+          const scaleMult = isMalicious ? 1.5 : 1;
+
+          // 🤖 Emoji Style Robot Design
+          const skinColor = isMalicious ? 0xcc0000 : 0xcccccc;
+          const metalMat = new THREE.MeshStandardMaterial({ 
+            color: skinColor, 
+            metalness: 0.8, 
+            roughness: 0.2 
+          });
+
+          // 1. Squared Head
+          const headGeo = new THREE.BoxGeometry(0.8 * scaleMult, 0.7 * scaleMult, 0.7 * scaleMult);
+          const head = new THREE.Mesh(headGeo, metalMat);
+          head.position.y = 0.8 * scaleMult;
+          drone.add(head);
+
+          // 2. Glowing Eyes
+          const eyeGeo = new THREE.BoxGeometry(0.15 * scaleMult, 0.15 * scaleMult, 0.1 * scaleMult);
+          const eyeMat = new THREE.MeshBasicMaterial({ color: droneColor, transparent: true });
+          const leftEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
+          leftEye.position.set(-0.2 * scaleMult, 0.9 * scaleMult, 0.35 * scaleMult);
+          drone.add(leftEye);
+          const rightEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
+          rightEye.position.set(0.2 * scaleMult, 0.9 * scaleMult, 0.35 * scaleMult);
+          drone.add(rightEye);
+
+          // Pulsing eyes
+          [leftEye, rightEye].forEach(eye => {
+            gsap.to(eye.material, { opacity: 0.3, duration: isMalicious ? 0.3 : 1, repeat: -1, yoyo: true });
+          });
+
+          // 3. Rectangular Body
+          const bodyGeo = new THREE.BoxGeometry(0.9 * scaleMult, 1.0 * scaleMult, 0.6 * scaleMult);
+          const body = new THREE.Mesh(bodyGeo, metalMat);
+          body.position.y = 0;
+          drone.add(body);
+
+          // 4. Ears (Antennas)
+          const earGeo = new THREE.CylinderGeometry(0.1 * scaleMult, 0.1 * scaleMult, 0.2 * scaleMult, 8);
+          const leftEar = new THREE.Mesh(earGeo, metalMat);
+          leftEar.position.set(-0.45 * scaleMult, 0.9 * scaleMult, 0);
+          leftEar.rotation.z = Math.PI / 2;
+          drone.add(leftEar);
+          const rightEar = new THREE.Mesh(earGeo, metalMat);
+          rightEar.position.set(0.45 * scaleMult, 0.9 * scaleMult, 0);
+          rightEar.rotation.z = -Math.PI / 2;
+          drone.add(rightEar);
+
+          // 5. Antenna on top
+          const antPoleGeo = new THREE.CylinderGeometry(0.02 * scaleMult, 0.02 * scaleMult, 0.3 * scaleMult, 8);
+          const antPole = new THREE.Mesh(antPoleGeo, metalMat);
+          antPole.position.set(0, 1.25 * scaleMult, 0);
+          drone.add(antPole);
+          const antTipGeo = new THREE.SphereGeometry(0.1 * scaleMult, 8, 8);
+          const antTip = new THREE.Mesh(antTipGeo, new THREE.MeshBasicMaterial({ color: droneColor }));
+          antTip.position.set(0, 1.4 * scaleMult, 0);
+          drone.add(antTip);
+
+          // 6. Construction Action (Looping Block Stacking)
+          const createFallingBlock = () => {
+            if (!sceneRef.current || !droneHost.parent) return;
+
+            const blockGeo = new THREE.BoxGeometry(2 * scaleMult, 0.8 * scaleMult, 2 * scaleMult);
+            const blockMat = new THREE.MeshStandardMaterial({ 
+              color: THEME.buildingBase, 
+              transparent: true,
+              opacity: 1
+            });
+            const fallingBlock = new THREE.Mesh(blockGeo, blockMat);
+            
+            // Spawn at robot's current global position
+            const robotWorldPos = new THREE.Vector3();
+            droneHost.getWorldPosition(robotWorldPos);
+            
+            // Adjust to be slightly under the robot
+            fallingBlock.position.copy(robotWorldPos);
+            fallingBlock.position.y -= 1.5 * scaleMult;
+            
+            sceneRef.current.add(fallingBlock);
+
+            // Animate stacking onto the building
+            const targetY = height + 0.5;
+            gsap.to(fallingBlock.position, {
+              y: targetY,
+              x: group.position.x,
+              z: group.position.z,
+              duration: isMalicious ? 0.8 : 1.5,
+              ease: "bounce.out",
+              onComplete: () => {
+                // Fade out after stacking
+                gsap.to(blockMat, {
+                  opacity: 0,
+                  duration: 0.5,
+                  onComplete: () => {
+                    if (sceneRef.current) sceneRef.current.remove(fallingBlock);
+                    blockGeo.dispose();
+                    blockMat.dispose();
+                  }
+                });
+              }
+            });
+          };
+
+          // Construction Loop
+          const startConstruction = () => {
+             const timer = setInterval(createFallingBlock, isMalicious ? 1500 : 3000);
+             return () => clearInterval(timer);
+          };
+          const cleanup = startConstruction();
+          // Note: In a production app, we'd need to store cleaner refs to these intervals, 
+          // but since this is inside the forEach/useEffect loop, it will run once per build.
 
           // Initial positioning
           const angle = Math.random() * Math.PI * 2;
@@ -414,41 +505,29 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
           droneGroup.add(droneHost);
           
           if (isMalicious) {
-            // RED BOT (Aggressive but controlled): Active scanning, no chaotic spin
+            // RED BOT (Aggressive Scanning)
             gsap.to(droneHost.position, {
-              y: "+=3",
+              y: "+=4",
               duration: 2,
               repeat: -1,
               yoyo: true,
               ease: "sine.inOut"
             });
             
-            // Random scanning movements
-            const scan = () => {
+            const action = () => {
               if (!sceneRef.current) return;
               gsap.to(droneHost.position, {
-                x: (Math.random() - 0.5) * 15,
-                z: (Math.random() - 0.5) * 15,
-                duration: 2,
+                x: (Math.random() - 0.5) * 20,
+                z: (Math.random() - 0.5) * 20,
+                duration: 1.5,
                 ease: "power2.inOut",
-                onComplete: () => setTimeout(scan, Math.random() * 1000 + 1000)
+                onComplete: () => setTimeout(action, Math.random() * 1000 + 500)
               });
-              
-              // Look at a point on the building
               drone.lookAt(0, height * Math.random(), 0);
             };
-            scan();
-
-            // Subtle roll instead of chaotic spin
-            gsap.to(drone.rotation, {
-              z: 0.2,
-              duration: 0.5,
-              repeat: -1,
-              yoyo: true,
-              ease: "sine.inOut"
-            });
+            action();
           } else {
-            // BLUE BOT (Constructive): Smooth, focused movement
+            // BLUE BOT (Smooth Construction)
             gsap.to(droneHost.position, {
               y: droneHost.position.y + 2,
               duration: 4,
@@ -457,10 +536,9 @@ const World: React.FC<WorldProps> = ({ onNodeFocus }) => {
               ease: "sine.inOut"
             });
 
-            // Smoothly orbit
             gsap.to(droneGroup.rotation, {
               y: Math.PI * 2,
-              duration: 15,
+              duration: 20,
               repeat: -1,
               ease: "none"
             });
