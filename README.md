@@ -1,20 +1,45 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Quanta Code City
 
-# Run and deploy your AI Studio app
+A 3D prototype that represents source-code structure and engineering metrics as a city. A Three.js scene and React HUD connect spatial exploration to selected-node details.
 
-This contains everything you need to run your app locally.
+## What it does
 
-View your app in AI Studio: https://ai.studio/apps/6dcef8a1-f4dd-4233-a494-4c8c4e475604
+- Render code nodes as spatial objects and buildings.
+- Inspect the selected node through a coordinated HUD.
+- Experiment with visual encodings for complexity, dependencies, coverage, and technical debt.
+- Explore motion, themes, and scene-level interactions.
 
-## Run Locally
+## Repository map
 
-**Prerequisites:**  Node.js
+| Path | Responsibility |
+| --- | --- |
+| [src/components/World.tsx](src/components/World.tsx) | 3D scene and node selection. |
+| [src/components/HUD.tsx](src/components/HUD.tsx) | Selected-node information. |
+| [src/constants.ts](src/constants.ts) | Theme and `MOCK_NODES` demonstration data. |
+| [src/types.ts](src/types.ts) | Visualization data model. |
+| [src/App.tsx](src/App.tsx) | Scene and HUD composition. |
 
+## Run locally
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Use Node.js. Run these commands from the repository root.
+
+```sh
+npm ci
+npm run dev
+```
+
+## Development checks
+
+```sh
+npm run lint
+npm run build
+```
+
+## Scope and status
+
+The current scene is driven by `MOCK_NODES`. Displayed risk and coverage values are demonstration inputs, not measurements from a live analysis engine. Source-file license notices remain authoritative.
+
+## Documentation
+
+- [Script reference](package.json)
+- [Demonstration data](src/constants.ts)
