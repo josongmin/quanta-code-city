@@ -2,17 +2,17 @@
 
 # Quanta Code City
 
-A 3D prototype that represents source-code structure and engineering metrics as a city. A Three.js scene and React HUD connect spatial exploration to selected-node details.
+<p align="center"><a href="#engineering-highlights">Engineering</a> · <a href="#architecture-at-a-glance">Architecture</a> · <a href="#run-locally">Get started</a> · <a href="#documentation">Reference</a></p>
 
+A 3D prototype that represents source-code structure and engineering metrics as a city. A Three.js scene and React HUD connect spatial exploration to selected-node details.
 
 ## Engineering highlights
 
-| Mechanism | Engineering purpose |
-| :--- | :--- |
-| **Scene / inspector separation** | The world owns 3D interaction, while the HUD receives focused-node state through the application boundary. |
-| **Typed code-node model** | A shared model carries node identity, type, dependencies, and sample quality/risk attributes. |
-| **Inspectable visual encoding** | The scene and interface explore how size, coupling, coverage, and risk could be represented spatially. |
-
+| Mechanism | Engineering purpose | Source |
+| :--- | :--- | :--- |
+| **Scene / inspector separation** | The world owns 3D interaction, while the HUD receives focused-node state through the application boundary. | [App boundary](src/App.tsx) |
+| **Typed code-node model** | A shared model carries node identity, type, dependencies, and sample quality/risk attributes. | [Node types](src/types.ts) |
+| **Inspectable visual encoding** | The scene and interface explore how size, coupling, coverage, and risk could be represented spatially. | [World](src/components/World.tsx) |
 
 ## Architecture at a glance
 
@@ -65,3 +65,5 @@ The current scene is driven by `MOCK_NODES`. Displayed risk and coverage values 
 
 - [Script reference](package.json)
 - [Demonstration data](src/constants.ts)
+
+<p align="center"><sub><a href="https://github.com/josongmin">Project map</a> · <a href="#engineering-highlights">Back to overview</a></sub></p>
