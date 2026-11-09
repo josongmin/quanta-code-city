@@ -1,6 +1,28 @@
+<p align="center"><img src="readme-banner.svg" alt="Quanta Code City — Explore a sample codebase as an interactive Three.js city." width="100%"></p>
+
 # Quanta Code City
 
 A 3D prototype that represents source-code structure and engineering metrics as a city. A Three.js scene and React HUD connect spatial exploration to selected-node details.
+
+
+## Engineering highlights
+
+| Mechanism | Engineering purpose |
+| :--- | :--- |
+| **Scene / inspector separation** | The world owns 3D interaction, while the HUD receives focused-node state through the application boundary. |
+| **Typed code-node model** | A shared model carries node identity, type, dependencies, and sample quality/risk attributes. |
+| **Inspectable visual encoding** | The scene and interface explore how size, coupling, coverage, and risk could be represented spatially. |
+
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    M["Sample CodeNode data"] --> W["Three.js World"]
+    W --> F["Focused node state"]
+    F --> H["React HUD"]
+    T["Theme and visual constants"] --> W
+```
 
 ## What it does
 
